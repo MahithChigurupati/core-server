@@ -12,6 +12,7 @@
     "url": "https://github.com:MahithChigurupati/core-server.git"
   },
   "author": "MahithChigurupati",
+  "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
     "chai": "^4.3.10",
