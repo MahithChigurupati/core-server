@@ -112,6 +112,8 @@ const sendPushNotify = async (req, res) => {
     }
 }
 
+const executeProofs = async (req, res) => {}
+
 const getAllStates = async (req, res) => {
     try {
         const states = await State.findAll()
@@ -146,4 +148,5 @@ module.exports = {
     sendPushNotify,
     getAllStates,
     getOrganizationsInState,
+    executeProofs,
 }

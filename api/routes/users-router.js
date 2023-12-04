@@ -13,6 +13,9 @@ router.post("/token", userController.saveOrUpdateToken)
 //Route for POST method -- to send push notification
 router.post("/notify", userController.sendPushNotify)
 
+// Route to execute proofs
+router.post("/proof", userController.executeProofs)
+
 router.get("/states", userController.getAllStates)
 router.get("/organizations/:stateId", userController.getOrganizationsInState)
 
