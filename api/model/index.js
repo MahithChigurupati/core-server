@@ -34,6 +34,10 @@ db.sequelize = sequelize
 
 //utilizing DB Schema with sequelize
 db.users = require("./userModel")(sequelize, DataTypes)
+db.devices = require("./deviceTokenModel")(sequelize, DataTypes)
+db.states = require("./stateModel")(sequelize, DataTypes)
+db.organizations = require("./organizationModel")(sequelize, DataTypes)
+db.requests = require("./requestsModel")(sequelize, DataTypes)
 
 db.sequelize.sync({ force: false }).then(() => {
     console.log("Syncing DB...")
