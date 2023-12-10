@@ -16,6 +16,12 @@ router.post("/notify", userController.sendPushNotify)
 // Route to execute proofs
 router.post("/proof", userController.executeProofs)
 
+// Route to verify proof
+router.post("/verify", userController.verifyProof)
+
+// Route to sendProof
+router.post("/sendProof", userController.sendProof)
+
 router.get("/states", userController.getAllStates)
 router.get("/organizations/:stateId", userController.getOrganizationsInState)
 
