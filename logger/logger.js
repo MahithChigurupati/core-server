@@ -9,7 +9,7 @@ const productionLogger = () => {
     return createLogger({
         level: "info",
         format: combine(timestamp({ format: "HH:mm:ss" }), myFormat),
-        transports: [new transports.File({ filename: "./logs/shortly.log" })],
+        transports: [new transports.File({ filename: "./logs/core-server.log" })],
     })
 }
 

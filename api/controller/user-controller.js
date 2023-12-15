@@ -1,7 +1,3 @@
-// importing external libraries
-// bcrypt for hashing the password
-// moment for creating timestamps
-// logger for logging
 const bcrypt = require("bcrypt")
 const moment = require("moment")
 const logger = require("../../logger")
@@ -10,6 +6,7 @@ const sequelize = require("../model/index")
 
 const ethers = require("ethers")
 const addresses = require("../../constants/contractAddresses.json")
+const addr = require("../../constants/addresses.json")
 const contractABI = require("../../constants/abi.json")
 
 const zkScript = require("../../../ZK-Snarks/script")
@@ -38,7 +35,6 @@ const saveOrUpdateToken = async (req, res) => {
     }
 
     try {
-        // Find the device record by email, or create a new one
         let [deviceRecord, created] = await Device.findOrCreate({
             where: { email: emailAddress },
             defaults: {
@@ -50,13 +46,14 @@ const saveOrUpdateToken = async (req, res) => {
             },
         })
 
-        // If the record already exists, update the token
         if (!created) {
             await deviceRecord.update({
                 token: token,
                 token_updated: moment().format("YYYY-MM-DDTHH:mm:ss"),
             })
         }
+
+        console.log(`${token} - Token created successfully.`)
 
         res.status(201).send(
             created ? "Token created successfully." : "Token updated successfully."
@@ -79,7 +76,6 @@ const sendPushNotify = async (req, res) => {
     }
 
     try {
-        // Retrieve device token from database using address
         const deviceRecord = await Device.findOne({
             where: { wallet_address: address },
         })
@@ -88,14 +84,12 @@ const sendPushNotify = async (req, res) => {
             return res.status(404).send("Device not found for the provided address.")
         }
 
-        // Check if the notification for this transaction ID has already been sent
         const existingRequest = await Request.findOne({ where: { txId: txId } })
 
         if (existingRequest) {
             return res.status(200).send("Notification already sent.")
         }
 
-        // Create new request record
         await Request.create({
             from: from,
             txId: txId,
@@ -104,7 +98,6 @@ const sendPushNotify = async (req, res) => {
             tx_type: txType,
         })
 
-        // Prepare the push notification message
         var message = {
             to: deviceRecord.token,
             notification: {
@@ -117,7 +110,6 @@ const sendPushNotify = async (req, res) => {
             },
         }
 
-        // Send the push notification
         fcm.send(message, function (err, response) {
             if (err) {
                 console.error("Something has gone wrong! " + err)
@@ -134,29 +126,27 @@ const sendPushNotify = async (req, res) => {
 }
 
 const executeProofs = async (req, res) => {
-    const { id, address, dob, ageThreshold } = req.body
+    const { id, address, dob, ageThreshold, id_type } = req.body
 
     if (!id || !address || !dob || !ageThreshold) {
         return res.status(400).send("Missing required fields.")
     }
 
-    // Assuming you have a function to get the provider for Sepolia network
     const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL)
 
-    // Fetch the deployed contract address
-    const contractAddress = addresses["11155111"][0] // Update based on your JSON structure
-    if (!contractAddress) {
-        return res.status(500).send("Contract address not found.")
+    let contractAddress = null
+
+    if (id_type === "DL") {
+        contractAddress = addresses["11155111"][0]
+    } else {
+        contractAddress = addr["11155111"][0]
     }
 
-    // Setup contract with ethers
     const contract = new ethers.Contract(contractAddress, contractABI, provider)
 
     try {
-        // Call the contract's function to get ID data
         const idData = await contract.getID(address)
 
-        // Assuming idData contains the signer's address and other necessary info
         const currentTimestamp = Date.now()
 
         const ageThresholdTimestamp = ageThreshold * 365 * 24 * 60 * 60 * 1000
@@ -164,15 +154,12 @@ const executeProofs = async (req, res) => {
         console.log("executing proof with ->")
         console.log(address, dob, currentTimestamp, ageThresholdTimestamp)
 
-        // Call createAgeProof function
         const { proof, publicSignals } = await zkScript.createAgeProof(
             address,
             dob,
             currentTimestamp,
             ageThresholdTimestamp
         )
-
-        console.log(idData.UID)
 
         const responseObject = {
             UID: idData.UID,
@@ -229,9 +216,6 @@ const verifyProof = async (req, res) => {
     try {
         const result = await zkScript.verifyAgeProof(proof, publicSignals)
 
-        console.log(proof)
-        console.log(publicSignals)
-
         res.status(200).send(result)
     } catch (error) {
         console.error("Error interacting with the contract:", error)
@@ -251,7 +235,7 @@ const getAllStates = async (req, res) => {
 }
 
 const getOrganizationsInState = async (req, res) => {
-    const { stateId } = req.params // or req.body, depending on how you're passing the state identifier
+    const { stateId } = req.params
 
     if (!stateId) {
         return res.status(400).send("Bad request, missing state identifier.")
@@ -261,6 +245,7 @@ const getOrganizationsInState = async (req, res) => {
         const organizations = await Organization.findAll({
             where: { stateId: stateId },
         })
+        console.log(organizations)
         res.json(organizations)
     } catch (error) {
         logger.error("Error in getOrganizationsInState: ", error)
